@@ -771,9 +771,8 @@ class RetroMC:
 
                 print("Coordinates: X: " + x + ", Y: " + y + ", Z: " + z)
                 rmc.locationMap(playerusernamefixed, int(x), int(y), int(z))
-        except Exception as e:
+        except:
             print("Coordinates: Player is offline")
-            print(e)
 
         request2, status2 = getapi("https://statistics.retromc.org/api/bans?uuid=" + str(playeruuid))
 
