@@ -463,6 +463,8 @@ class RetroMC:
         print("Owner: " + uuidtousername(request2["owner"]))
         print("Location: X:" + str(request2["spawn"]["x"]) + ", Y:" + str(request2["spawn"]["y"]) + ", Z:" + str(request2["spawn"]["z"]) + " in world " + request2["spawn"]["world"])
 
+        rmc.locationMap(str(request2["name"]), request2["spawn"]["x"], request2["spawn"]["y"], request2["spawn"]["z"], request2["spawn"]["world"])
+        print()
         if request2["creationTime"] != 1640995200:
             print("Creation time: " + unixtimetotime(request2["creationTime"]))
         else:
@@ -768,8 +770,10 @@ class RetroMC:
                 z = str(request["z"])
 
                 print("Coordinates: X: " + x + ", Y: " + y + ", Z: " + z)
-        except:
+                rmc.locationMap(playerusernamefixed, int(x), int(y), int(z))
+        except Exception as e:
             print("Coordinates: Player is offline")
+            print(e)
 
         request2, status2 = getapi("https://statistics.retromc.org/api/bans?uuid=" + str(playeruuid))
 
@@ -1046,6 +1050,122 @@ class RetroMC:
             else:
                 cls()
                 print(c.red + "Error: Invalid option!" + c.reset)
+
+    @staticmethod
+    def locationMap(name, x, y, z, world="nothin", compassChar="\u253c"):
+        mapWidth = os.get_terminal_size().columns
+        title = f"LOCATION OF {name.upper()}"
+        if (len(title) + len(str(x)) + len(str(y)) + len(str(z)) + 19) <= mapWidth:
+            bigMap = True
+            actualMapWidth = mapWidth - 8
+            mapHeight = mapWidth // 4
+            actualMapHeight = mapHeight - 6
+            print(c.aqua + "\u250c" + c.reset + "\u2500"*(mapWidth-(17+len(str(x))+len(str(y))+len(str(z)))) + "\u252c" + "\u2500"*(len(str(x))+4) + "\u252c" + "\u2500"*(len(str(y))+4) + "\u252c" + "\u2500"*(len(str(z))+4) + c.aqua + "\u2510" + c.reset)
+            print("\u2502 " + f'{title:{mapWidth-(19+len(str(x))+len(str(y))+len(str(z)))}}' + " \u2502 X=" + str(x) + " \u2502 Y=" + str(y) + " \u2502 Z=" + str(z) + " \u2502")
+            print("\u251c" + "\u2500"*5 + "\u252c" + "\u2500"*(mapWidth-(23+len(str(x))+len(str(y))+len(str(z)))) + "\u2534" + "\u2500"*(len(str(x))+4) + "\u2534" + "\u2500"*(len(str(y))+4) + "\u2534" + "\u2500"*(len(str(z))+4) + "\u2524")
+        else:
+            bigMap = False
+            actualMapWidth = mapWidth - 2
+            mapHeight = mapWidth // 2
+            actualMapHeight = mapHeight - 4
+            print(c.aqua + "\u250c" + c.reset + "\u2500"*(mapWidth-2) + c.aqua + "\u2510" + c.reset)
+            print("\u2502 " + f'{title:{mapWidth-4}}' + " \u2502")
+            print("\u251c" + "\u2500"*(mapWidth-2) + "\u2524")
+        Xcol = round((x/30000)*(actualMapWidth/2))+(round(actualMapWidth/2))
+        Xline = round((z/30000)*(actualMapHeight/2))+(round(actualMapHeight/2))
+        midPoint = (round(actualMapWidth/2), round(actualMapHeight/2))
+        if bigMap == True:
+            if world == "retromc":
+                shortWorldName = "RMC"
+            elif world == "skylands":
+                shortWorldName = "SKY"
+            else:
+                shortWorldName = "???"
+            sideMarkerSpacing = round(actualMapHeight/6)
+            sideMarkers = (0, midPoint[1]-(2*sideMarkerSpacing), midPoint[1]-sideMarkerSpacing, midPoint[1], midPoint[1]+sideMarkerSpacing, midPoint[1]+(2*sideMarkerSpacing), actualMapHeight-1)
+            #print(sideMarkers)
+            bottomMarkerSpacing = round(actualMapWidth/6)
+            bottomMarkers = (0, midPoint[0]-(2*bottomMarkerSpacing), midPoint[0]-bottomMarkerSpacing, midPoint[0], midPoint[0]+bottomMarkerSpacing, midPoint[0]+(2*bottomMarkerSpacing), actualMapWidth-1)
+            sideMarkerCounter = -3
+            for i in range(actualMapHeight):
+                if i in sideMarkers:
+                    firstPart = "\u2502" + f'{sideMarkerCounter*10:>4}' + "K" + "\u2524"
+                    sideMarkerCounter += 1
+                else:
+                    firstPart = "\u2502     \u2502"
+                secondPart = ""
+                secondPartList = []
+                for character in " "*actualMapWidth + "\u2502":
+                    secondPartList.append(character)
+                if i == 0:
+                    secondPartList[actualMapWidth-4] = c.aqua + "N" + c.reset
+                if i == 1:
+                    secondPartList[actualMapWidth-4] = c.aqua + "\u2502" + c.reset
+                if i == 2:
+                    secondPartList[actualMapWidth-6] = "W"
+                    secondPartList[actualMapWidth-5] = "\u2500"
+                    secondPartList[actualMapWidth-4] = compassChar
+                    secondPartList[actualMapWidth-3] = "\u2500"
+                    secondPartList[actualMapWidth-2] = "E"
+                if i == 3:
+                    secondPartList[actualMapWidth-4] = "\u2502"
+                if i == 4:
+                    secondPartList[actualMapWidth-4] = "S"
+                if i == midPoint[1]:
+                    secondPartList[midPoint[0]] = "+"
+                if i == Xline:
+                    secondPartList[Xcol] = c.red + "X" + c.reset
+                for part in secondPartList:
+                    secondPart += part
+                print(firstPart + secondPart)
+            XaxisList = []
+            for ThisIsTheXaxis in "\u251c" + "\u2500"*5 + "\u253c" + "\u2500"*actualMapWidth + "\u2524":
+                XaxisList.append(ThisIsTheXaxis)
+            for counter in range(actualMapWidth):
+                if counter in bottomMarkers:
+                    XaxisList[counter+7] = "\u252c"
+            Xaxis = ""
+            for part in XaxisList:
+                Xaxis += part
+            print(Xaxis)
+            firstPart = f"\u2502 {shortWorldName} \u2502"
+            secondPartList = []
+            for char in " "*actualMapWidth + "\u2502":
+                secondPartList.append(char)
+            counter = -3
+            for index in range(actualMapWidth):
+                if index in bottomMarkers:
+                    if counter > 0:
+                        secondPartList[index-2] = str(counter*10)[0]
+                        secondPartList[index-1] = str(counter*10)[1]
+                        secondPartList[index] = "K"
+                    elif counter < 0:
+                        secondPartList[index] = str(counter*10)[0]
+                        secondPartList[index+1] = str(counter*10)[1]
+                        secondPartList[index+2] = str(counter*10)[2]
+                        secondPartList[index+3] = "K"
+                    else:
+                        secondPartList[index] = "0"
+                    counter += 1
+            secondPart = ""
+            for part in secondPartList:
+                secondPart += part
+            print(firstPart + secondPart)
+            print(c.aqua + "\u2514" + c.reset + "\u2500"*5 + "\u2534" + "\u2500"*(mapWidth-8) + c.aqua + "\u2518" + c.reset)
+        else:
+            for i in range(actualMapHeight):
+                midPartList = []
+                for char in " "*actualMapWidth:
+                    midPartList.append(char)
+                if i == midPoint[1]:
+                    midPartList[midPoint[0]] = "+"
+                if i == Xline:
+                    midPartList[Xcol] = c.red + "X" + c.reset
+                midPart = ""
+                for char in midPartList:
+                    midPart += char
+                print("\u2502" + midPart + "\u2502")
+            print(c.aqua + "\u2514" + c.reset + "\u2500"*actualMapWidth + c.aqua + "\u2518" + c.reset)
 
 rmc = RetroMC()
 
