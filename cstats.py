@@ -266,6 +266,15 @@ def commaloop(value, separator = ", "):
     if value != 0:
         print(separator, end = "")
 
+def camelCaseToNormal(TheString):
+    output = ""
+    for char in TheString:
+        if char.isupper():
+            output += " " + char.lower()
+        else:
+            output += char
+    return output
+
 def randomquote():
     splashes = [
         "\"GUI soon(tm)\" - samcraft3",
@@ -903,6 +912,31 @@ class RetroMC:
         else:
             for i in range(len(request["entries"])):
                 print(str(i + 1) + ". " + request["entries"][i]["username"] + " = "  + dataprefix + str(request["entries"][i]["value"]) + datasuffix)
+
+        # the chart
+        chartWidth = os.get_terminal_size().columns # classic CMD: 81x25; classic PowerShell: 120x50; Windows Terminal: 121x30
+        maxUsernameLength = 0
+        maxValue = request["entries"][0]["value"]
+        showTitle = True
+        for i in range(len(request["entries"])):
+            if i == 10:
+                break
+            if maxUsernameLength < len(request["entries"][i]["username"]):
+                maxUsernameLength = len(request["entries"][i]["username"])
+            
+        print("\nChart:")
+        print(c.aqua + "\u250c" + c.reset + "\u2500"*(chartWidth-2) + c.aqua + "\u2510" + c.reset)
+        if showTitle:
+            print("\u2502" + f'{"LEADERBOARD FOR " + camelCaseToNormal(stattype).upper():^{chartWidth-2}}' + "\u2502")
+            print("\u251c" + "\u2500"*(chartWidth-2) + "\u2524")
+        for i in range(len(request["entries"])):
+            if i == 10:
+                break
+            if i != 0:
+                print("\u2502" + " "*(chartWidth-2) + "\u2502")
+            length = round((request["entries"][i]["value"]/maxValue)*(chartWidth-5-maxUsernameLength))
+            print("\u2502" + f' {request["entries"][i]["username"]:{maxUsernameLength}} ' + "\u2588"*length + " "*(chartWidth-4-maxUsernameLength-length) + "\u2502")
+        print(c.aqua + "\u2514" + c.reset + "\u2500"*(chartWidth-2) + c.aqua + "\u2518" + c.reset)
 
         entertocontinue("\nPress " + c.aqua + "ENTER" + c.reset + " to return to leaderboard menu.\n")
         cls()
